@@ -10,7 +10,10 @@ export default function Page() {
 
   useEffect(() => {
     apiFetch(`/api/v1/posts`)
-      .then(setPosts);
+      .then(setPosts)
+      .catch((error) => {
+        alert(`${error.resultCode} : ${error.msg}`);
+      });
   }, []);
 
   if (posts == null) return <div>로딩중...</div>;
@@ -25,7 +28,9 @@ export default function Page() {
         <ul>
           {posts.map((post) => (
             <li key={post.id}>
-              <Link href={`/posts/${post.id}`}>{post.title}</Link>
+              <Link href={`/posts/${post.id}`}>
+                {post.id} : {post.title}
+              </Link>
             </li>
           ))}
         </ul>

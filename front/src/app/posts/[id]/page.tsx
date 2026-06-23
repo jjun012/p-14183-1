@@ -3,8 +3,8 @@
 import { apiFetch } from "@/lib/backend/client";
 import type { PostCommentDto, PostWithContentDto } from "@/type/post";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { use, useEffect, useState } from "react";
 
 function usePost(id: number) {
   const [post, setPost] = useState<PostWithContentDto | null>(null);
@@ -20,7 +20,11 @@ function usePost(id: number) {
   const deletePost = (id: number, onSuccess: () => void) => {
     apiFetch(`/api/v1/posts/${id}`, {
       method: "DELETE",
-    }).then(onSuccess);
+    })
+      .then(onSuccess)
+      .catch((error) => {
+        alert(`${error.resultCode} : ${error.msg}`);
+      });
   };
 
   return {
@@ -45,13 +49,17 @@ function usePostComments(postId: number) {
   const deleteComment = (commentId: number, onSuccess: (data: any) => void) => {
     apiFetch(`/api/v1/posts/${postId}/comments/${commentId}`, {
       method: "DELETE",
-    }).then((data) => {
-      if (postComments == null) return;
+    })
+      .then((data) => {
+        if (postComments == null) return;
 
-      setPostComments(postComments.filter((c) => c.id != commentId));
+        setPostComments(postComments.filter((c) => c.id != commentId));
 
-      onSuccess(data);
-    });
+        onSuccess(data);
+      })
+      .catch((error) => {
+        alert(`${error.resultCode} : ${error.msg}`);
+      });
   };
 
   const writeComment = (content: string, onSuccess: (data: any) => void) => {
@@ -60,13 +68,17 @@ function usePostComments(postId: number) {
       body: JSON.stringify({
         content,
       }),
-    }).then((data) => {
-      if (postComments == null) return;
+    })
+      .then((data) => {
+        if (postComments == null) return;
 
-      setPostComments([...postComments, data.data]);
+        setPostComments([...postComments, data.data]);
 
-      onSuccess(data);
-    });
+        onSuccess(data);
+      })
+      .catch((error) => {
+        alert(`${error.resultCode} : ${error.msg}`);
+      });
   };
 
   const modifyComment = (
@@ -77,17 +89,21 @@ function usePostComments(postId: number) {
     apiFetch(`/api/v1/posts/${postId}/comments/${commentId}`, {
       method: "PUT",
       body: JSON.stringify({ content }),
-    }).then((data) => {
-      if (postComments == null) return;
+    })
+      .then((data) => {
+        if (postComments == null) return;
 
-      setPostComments(
-        postComments.map((comment) =>
-          comment.id === commentId ? { ...comment, content } : comment
-        )
-      );
+        setPostComments(
+          postComments.map((comment) =>
+            comment.id === commentId ? { ...comment, content } : comment
+          )
+        );
 
-      onSuccess(data);
-    });
+        onSuccess(data);
+      })
+      .catch((error) => {
+        alert(`${error.resultCode} : ${error.msg}`);
+      });
   };
 
   return {
@@ -120,7 +136,7 @@ function PostInfo({ postState }: { postState: ReturnType<typeof usePost> }) {
       <div style={{ whiteSpace: "pre-line" }}>{post.content}</div>
 
       <div className="flex gap-2">
-        <button className="p-2 rounded border cursor-pointer" onClick={deletePost}>
+        <button className="p-2 rounded border" onClick={deletePost}>
           삭제
         </button>
         <Link className="p-2 rounded border" href={`/posts/${post.id}/edit`}>
@@ -139,7 +155,7 @@ function PostCommentWrite({
   const { postId, writeComment } = postCommentsState;
 
   const handleCommentWriteFormSubmit = (
-    e: React.SyntheticEvent<HTMLFormElement>
+    e: React.FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
 
@@ -154,7 +170,6 @@ function PostCommentWrite({
     if (contentTextarea.value.length === 0) {
       alert("댓글 내용을 입력해주세요.");
       contentTextarea.focus();
-
       return;
     }
 
@@ -320,16 +335,14 @@ function PostCommentWriteAndList({
     <>
       <PostCommentWrite postCommentsState={postCommentsState} />
 
-      <hr className="my-2" />
-
       <PostCommentList postCommentsState={postCommentsState} />
     </>
   );
 }
 
-export default function Page() {
-  const { id: idStr } = useParams<{ id: string }>();
-  const id = Number(idStr);
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id: idStr } = use(params);
+  const id = parseInt(idStr);
 
   const postState = usePost(id);
   const postCommentsState = usePostComments(id);
@@ -339,8 +352,6 @@ export default function Page() {
       <h1>글 상세페이지</h1>
 
       <PostInfo postState={postState} />
-
-      <hr className="my-2" />
 
       <PostCommentWriteAndList postCommentsState={postCommentsState} />
     </>

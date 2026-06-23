@@ -9,17 +9,21 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
 
   const { id: idStr } = use(params);
-  const id = Number(idStr);
+  const id = parseInt(idStr);
 
   const [post, setPost] = useState<PostWithContentDto | null>(null);
 
   useEffect(() => {
-    apiFetch(`/api/v1/posts/${id}`).then(setPost);
+    apiFetch(`/api/v1/posts/${id}`)
+      .then(setPost)
+      .catch((error) => {
+        alert(`${error.resultCode} : ${error.msg}`);
+      });
   }, []);
 
   if (post == null) return <div>로딩중...</div>;
 
-  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const form = e.target as HTMLFormElement;
@@ -51,11 +55,14 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         title: titleInput.value,
         content: contentTextarea.value,
       }),
-    }).then((data) => {
-      alert(data.msg);
-      
-      router.replace(`/posts/${id}`);
-    });
+    })
+      .then((data) => {
+        alert(data.msg);
+        router.replace(`/posts/${id}`);
+      })
+      .catch((error) => {
+        alert(`${error.resultCode} : ${error.msg}`);
+      });
   };
 
   return (
