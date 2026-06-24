@@ -11,7 +11,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
 
   const { id: idStr } = use(params);
-  const id = parseInt(idStr);
+  const id = Number(idStr);
 
   const [post, setPost] = useState<PostWithContentDto | null>(null);
 
@@ -25,7 +25,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
   if (post == null) return <div>로딩중...</div>;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const form = e.target as HTMLFormElement;
